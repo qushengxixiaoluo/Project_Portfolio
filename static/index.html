@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>档库 ARCHIVE · 项目归档与 AI 问答</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-seal">档</span>
+    <div class="brand-text">
+      <h1>档库 <em>ARCHIVE</em></h1>
+      <p class="brand-sub">上传即归档 · 项目内 AI 问答</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="mono label" id="stat-line">— 个项目 · — 份文件</span>
+    <button class="btn-primary" id="btn-upload-top">＋ 归档文件</button>
+    <input type="file" id="file-input" multiple hidden>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- 左栏：项目索引 -->
+  <aside class="col col-projects">
+    <div class="col-head">
+      <span class="mono label">索引 / INDEX</span>
+      <button class="btn-ghost" id="btn-new-project">＋ 新建项目</button>
+    </div>
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-inner">
+        <span class="drop-icon">⇲</span>
+        <p>拖拽文件到这里<br><small>归入当前项目，或选择/新建项目</small></p>
+      </div>
+    </div>
+    <nav class="project-list" id="project-list" aria-label="项目列表"></nav>
+  </aside>
+
+  <!-- 中栏：项目详情与文件 -->
+  <section class="col col-files">
+    <div class="col-head">
+      <span class="mono label">卷宗 / DOSSIER</span>
+    </div>
+    <div id="project-detail" class="project-detail">
+      <div class="empty-state">
+        <div class="empty-glyph">❏</div>
+        <h2>未选择项目</h2>
+        <p>从左侧选择一个项目，或拖入文件开始归档。</p>
+      </div>
+    </div>
+    <div class="upload-tray" id="upload-tray" hidden></div>
+  </section>
+
+  <!-- 右栏：AI 助手 -->
+  <aside class="col col-chat">
+    <div class="col-head">
+      <span class="mono label">问答 / INQUIRY</span>
+      <span class="chat-target mono" id="chat-target">未选择项目</span>
+    </div>
+    <div class="chat-log" id="chat-log">
+      <div class="chat-empty">
+        <p class="chat-empty-title">AI 档案员</p>
+        <p>选择一个项目后，即可就该项目的全部文件提问。<br>回答基于检索到的项目内容，并标注来源。</p>
+      </div>
+    </div>
+    <form class="chat-form" id="chat-form">
+      <textarea id="chat-input" rows="2" placeholder="选择项目后提问…（Enter 发送，Shift+Enter 换行）" disabled></textarea>
+      <button type="submit" id="chat-send" disabled>发送</button>
+    </form>
+  </aside>
+</main>
+
+<!-- 新建项目 -->
+<div class="modal-mask" id="newproj-mask">
+  <div class="modal">
+    <h3>新建项目</h3>
+    <p class="m-hint">先建项目，再往里面上传相关文档。</p>
+    <label>项目名称 *</label>
+    <input id="np-name" placeholder="如：智慧社区管理平台">
+    <label>一句话简介（可选）</label>
+    <input id="np-summary" placeholder="这个项目是做什么的">
+    <div class="modal-actions">
+      <button class="btn-ghost" id="np-cancel">取消</button>
+      <button class="btn-primary" id="np-create">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 上传目标选择（未选中项目时弹出） -->
+<div class="modal-mask" id="target-mask">
+  <div class="modal">
+    <h3>上传到哪个项目？</h3>
+    <p class="m-hint">选择已有项目、新建一个，或让 AI 自动识别归属。</p>
+    <div class="target-list" id="target-list"></div>
+    <label>或新建项目名称</label>
+    <input id="target-newname" placeholder="留空则不新建">
+    <div class="modal-actions">
+      <label class="target-ai"><input type="radio" name="target-mode" value="ai" id="target-ai"> 让 AI 自动识别归属</label>
+      <button class="btn-ghost" id="target-cancel">取消</button>
+      <button class="btn-primary" id="target-ok">开始上传</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

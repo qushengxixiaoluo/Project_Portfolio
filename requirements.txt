@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+anthropic
+jieba
+rank_bm25
+pypdf
+python-docx
+python-multipart
+python-dotenv

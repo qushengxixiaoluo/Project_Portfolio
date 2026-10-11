@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>档库 ARCHIVE · 单文件版（纯前端）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   档库 ARCHIVE — 明亮新粗野主义：奶油亮底 × 纯黑描边 × 明黄朱红
+   ============================================================ */
+:root {
+  --bg: #fff6dc;
+  --panel: #ffffff;
+  --panel-2: #fffdf3;
+  --panel-3: #ffeea8;
+  --line: #141210;
+  --line-soft: #141210;
+  --ink: #141210;
+  --ink-dim: #423c34;
+  --muted: #7c7466;
+  --amber: #ffbe0b;
+  --amber-deep: #ff9e00;
+  --amber-ink: #a86500;
+  --seal: #ff4d2e;
+  --ok: #2f9e44;
+  --err: #e03131;
+  --serif: "Noto Serif SC", serif;
+  --sans: "Noto Sans SC", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+  --hard: 3px 3px 0 var(--line);
+  --hard-sm: 2px 2px 0 var(--line);
+  --hard-lg: 5px 5px 0 var(--line);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow: hidden;
+  background-image:
+    radial-gradient(rgba(20, 18, 16, 0.07) 1px, transparent 1px),
+    radial-gradient(ellipse 70% 45% at 50% -8%, rgba(255, 190, 11, 0.35), transparent),
+    radial-gradient(ellipse 55% 40% at 100% 105%, rgba(255, 77, 46, 0.16), transparent);
+  background-size: 22px 22px, auto, auto;
+}
+
+/* 纸张颗粒 */
+.grain {
+  position: fixed; inset: 0; z-index: 999; pointer-events: none;
+  opacity: 0.35; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+}
+
+.mono { font-family: var(--mono); }
+.label {
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--muted); font-weight: 600;
+}
+
+/* ---------------- 顶栏 ---------------- */
+.topbar {
+  height: 64px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 22px;
+  border-bottom: 3px solid var(--line);
+  background: var(--panel);
+  position: relative; z-index: 10;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-seal {
+  width: 40px; height: 40px; display: grid; place-items: center;
+  background: var(--seal); color: #fff;
+  font-family: var(--serif); font-weight: 900; font-size: 21px;
+  border: 2.5px solid var(--line); border-radius: 8px;
+  box-shadow: var(--hard);
+  transform: rotate(-3deg);
+}
+.brand-text h1 {
+  font-family: var(--serif); font-size: 20px; font-weight: 900; letter-spacing: 0.06em;
+}
+.brand-text h1 em {
+  font-style: normal; font-family: var(--mono); font-weight: 600;
+  font-size: 11px; color: var(--amber-ink); letter-spacing: 0.3em; margin-left: 6px;
+  vertical-align: 3px;
+}
+.brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; }
+
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.btn-ghost-top, .btn-ghost {
+  font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  color: var(--ink); background: var(--panel);
+  border: 2px solid var(--line); border-radius: 6px;
+  padding: 7px 12px; cursor: pointer;
+  box-shadow: var(--hard-sm);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.btn-ghost-top:hover, .btn-ghost:hover {
+  transform: translate(-1px, -1px); box-shadow: var(--hard);
+  color: var(--seal); border-color: var(--line);
+}
+.btn-ghost-top:active, .btn-ghost:active { transform: translate(1px, 1px); box-shadow: none; }
+.btn-ghost:hover { color: var(--err); }
+
+/* 危险操作：删除按钮常驻红色 */
+.btn-danger {
+  color: #fff; background: var(--err);
+  border-color: var(--line);
+}
+.btn-danger:hover { color: #fff; background: #c92a2a; }
+.btn-ghost-top.btn-danger:hover { color: #fff; }
+
+.btn-primary {
+  font-family: var(--sans); font-size: 13px; font-weight: 800;
+  color: var(--ink); background: var(--amber);
+  border: 2.5px solid var(--line); border-radius: 6px;
+  padding: 9px 18px; cursor: pointer; letter-spacing: 0.08em;
+  box-shadow: var(--hard);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.btn-primary:hover { transform: translate(-2px, -2px); box-shadow: var(--hard-lg); }
+.btn-primary:active { transform: translate(2px, 2px); box-shadow: none; }
+
+/* ---------------- 三栏布局 ---------------- */
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr 400px;
+  height: calc(100vh - 64px);
+}
+.col {
+  display: flex; flex-direction: column; min-height: 0;
+  border-right: 3px solid var(--line);
+  position: relative;
+}
+.col:last-child { border-right: none; }
+.col-head {
+  padding: 14px 18px 10px; display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 2.5px dashed var(--line);
+}
+
+/* ---------------- 左栏：项目索引 ---------------- */
+.dropzone {
+  margin: 14px 16px 6px;
+  border: 2.5px dashed var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+  transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.dropzone:hover, .dropzone.over {
+  background: var(--panel-3);
+  box-shadow: var(--hard);
+}
+.dropzone.over { transform: scale(1.03) rotate(-0.5deg); border-style: solid; }
+.dropzone-inner { text-align: center; padding: 18px 10px; color: var(--ink-dim); }
+.drop-icon {
+  font-size: 22px; color: var(--ink); display: inline-grid; place-items: center;
+  width: 40px; height: 40px; background: var(--amber);
+  border: 2px solid var(--line); border-radius: 8px; box-shadow: var(--hard-sm);
+  margin-bottom: 8px;
+}
+.dropzone p { font-size: 12.5px; letter-spacing: 0.05em; font-weight: 500; }
+.dropzone small { color: var(--muted); font-size: 11px; }
+
+.project-list { flex: 1; overflow-y: auto; padding: 8px 12px 20px; }
+
+.project-item {
+  width: 100%; text-align: left; display: block; position: relative;
+  background: var(--panel);
+  border: 2.5px solid var(--line);
+  border-radius: 8px;
+  padding: 11px 12px 11px 14px; margin-bottom: 8px;
+  cursor: pointer; color: var(--ink); font-family: var(--sans);
+  box-shadow: var(--hard-sm);
+  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+  animation: slideIn 0.35s ease both;
+}
+.project-item:hover { transform: translate(-2px, -2px); box-shadow: var(--hard); }
+.project-item.active {
+  background: var(--panel-3);
+  box-shadow: var(--hard);
+  transform: translate(-2px, -2px);
+}
+.project-item.active::before {
+  content: ""; position: absolute; left: -2.5px; top: 8px; bottom: 8px; width: 6px;
+  background: var(--seal); border-radius: 0 3px 3px 0;
+}
+.project-item .p-idx {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  letter-spacing: 0.1em; font-weight: 600;
+}
+.project-item .p-name {
+  font-family: var(--serif); font-weight: 900; font-size: 15px; margin: 2px 0 3px;
+  display: block;
+}
+.project-item .p-meta { font-size: 11px; color: var(--muted); }
+.project-item .p-meta b {
+  color: var(--ink); background: var(--amber);
+  border: 1.5px solid var(--line); border-radius: 4px;
+  padding: 0 5px; font-weight: 700;
+}
+
+.empty-note { color: var(--muted); font-size: 12px; text-align: center; padding: 24px 12px; }
+
+/* ---------------- 中栏：卷宗 ---------------- */
+.col-files { background: rgba(255, 255, 255, 0.45); }
+.project-detail { flex: 1; overflow-y: auto; padding: 20px 26px 30px; }
+
+.empty-state { text-align: center; padding-top: 12vh; color: var(--muted); }
+.empty-glyph {
+  font-size: 40px; display: inline-grid; place-items: center;
+  width: 84px; height: 84px; background: var(--panel);
+  border: 3px solid var(--line); border-radius: 14px; box-shadow: var(--hard-lg);
+  margin-bottom: 16px; transform: rotate(-3deg);
+}
+.empty-state h2 { font-family: var(--serif); font-size: 22px; color: var(--ink); margin-bottom: 6px; font-weight: 900; }
+.empty-state p { font-size: 13px; color: var(--muted); }
+
+.detail-head { margin-bottom: 20px; animation: slideIn 0.35s ease both; }
+.detail-head .d-idx {
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  color: var(--ink); background: var(--amber);
+  border: 2px solid var(--line); border-radius: 5px;
+  padding: 2px 8px; letter-spacing: 0.14em;
+  box-shadow: var(--hard-sm); display: inline-block;
+}
+.detail-head h2 {
+  font-family: var(--serif); font-size: 30px; font-weight: 900; letter-spacing: 0.04em;
+  margin: 10px 0 8px;
+}
+.detail-head .d-summary {
+  color: var(--ink-dim); font-size: 13.5px; max-width: 62ch;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-left: 8px solid var(--seal);
+  border-radius: 6px; padding: 10px 14px;
+  box-shadow: var(--hard-sm);
+}
+.tag-row { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em;
+  color: var(--ink); background: var(--panel-3);
+  border: 2px solid var(--line);
+  padding: 2px 9px; border-radius: 99px;
+}
+.detail-actions { margin-top: 14px; display: flex; gap: 8px; }
+.d-storage {
+  margin-top: 12px; font-size: 11px; color: var(--muted);
+  letter-spacing: 0.04em; overflow-wrap: anywhere;
+  background: var(--panel-2); border: 2px dashed var(--line);
+  border-radius: 6px; padding: 6px 10px;
+  display: inline-block;
+}
+.folder-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--panel-2); border: 2.5px solid var(--line);
+  border-radius: 6px; padding: 8px 10px; box-shadow: var(--hard-sm);
+}
+.folder-row span {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.folder-hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* ---------------- AI 项目介绍 ---------------- */
+.intro-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 22px 0 10px;
+}
+.intro-head .files-label { margin: 0; }
+.intro-card {
+  background: var(--panel);
+  border: 2.5px solid var(--line);
+  border-left: 8px solid var(--seal);
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: var(--hard-sm);
+  font-size: 13.5px; line-height: 1.75;
+  color: var(--ink-dim);
+  white-space: normal;
+  animation: slideIn 0.3s ease both;
+}
+.intro-card h4 {
+  font-family: var(--serif); font-size: 15.5px; font-weight: 900;
+  color: var(--ink); margin: 14px 0 6px;
+}
+.intro-card h4:first-child { margin-top: 0; }
+.intro-card p { margin-bottom: 6px; }
+.intro-card code {
+  font-family: var(--mono); font-size: 12.5px; font-weight: 600;
+  background: var(--panel-3); border: 1.5px solid var(--line);
+  padding: 0 5px; border-radius: 4px;
+}
+.intro-card ul { padding-left: 20px; margin: 4px 0 8px; }
+.intro-loading {
+  background: var(--panel-2);
+  border: 2.5px dashed var(--line);
+  border-radius: 8px; padding: 18px 20px;
+  color: var(--amber-ink); font-weight: 700; font-size: 13px;
+}
+.intro-loading::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+
+.files-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em;
+  color: var(--muted); font-weight: 600;
+  margin: 22px 0 10px; display: flex; align-items: center; gap: 10px;
+}
+.files-label::after { content: ""; flex: 1; border-top: 2.5px dashed var(--line); opacity: 0.35; }
+
+.file-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--panel);
+  border: 2.5px solid var(--line);
+  border-radius: 8px; padding: 11px 14px; margin-bottom: 9px;
+  box-shadow: var(--hard-sm);
+  transition: transform 0.12s, box-shadow 0.12s;
+  animation: slideIn 0.3s ease both;
+}
+.file-row:hover { transform: translate(-2px, -2px); box-shadow: var(--hard); }
+.file-badge {
+  font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--ink);
+  background: var(--amber);
+  border: 2px solid var(--line);
+  padding: 3px 7px; border-radius: 5px; text-transform: uppercase;
+  min-width: 46px; text-align: center;
+  box-shadow: 1.5px 1.5px 0 var(--line);
+}
+.file-info { flex: 1; min-width: 0; }
+.file-name { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-meta { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+.file-del {
+  background: var(--err); border: 2px solid var(--line); color: #fff;
+  cursor: pointer; font-size: 13px; font-weight: 700;
+  width: 28px; height: 28px; border-radius: 6px;
+  box-shadow: 1.5px 1.5px 0 var(--line);
+  transition: all 0.12s;
+}
+.file-del:hover {
+  background: #c92a2a; transform: translate(-1px, -1px);
+  box-shadow: var(--hard-sm);
+}
+
+/* ---------------- 上传托盘（归档动效） ---------------- */
+.upload-tray {
+  border-top: 3px solid var(--line);
+  background: var(--panel-2);
+  padding: 14px 20px; max-height: 42vh; overflow-y: auto;
+}
+.tray-title {
+  font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.22em;
+  color: var(--ink); background: var(--amber);
+  display: inline-flex; align-items: center; gap: 10px;
+  border: 2px solid var(--line); border-radius: 5px;
+  padding: 2px 10px; margin-bottom: 12px;
+  box-shadow: var(--hard-sm);
+}
+.tray-close {
+  border: none; background: transparent; color: var(--ink);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  padding: 0 2px; line-height: 1.4;
+}
+.tray-close:hover { color: var(--err); }
+.archive-card {
+  background: var(--panel);
+  border: 2.5px solid var(--line);
+  border-left: 8px solid var(--amber);
+  border-radius: 8px; padding: 11px 14px; margin-bottom: 9px;
+  box-shadow: var(--hard-sm);
+  animation: slideIn 0.3s ease both;
+}
+.archive-card.err { border-left-color: var(--err); }
+.archive-card .ac-name { font-weight: 800; font-size: 13.5px; }
+.archive-card .ac-status { font-size: 12.5px; color: var(--ink-dim); margin-top: 3px; }
+.archive-card .ac-status b {
+  color: var(--ink); background: var(--panel-3);
+  border: 1.5px solid var(--line); border-radius: 4px;
+  padding: 0 6px; font-weight: 700;
+}
+.archive-card .ac-reason { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.archive-card .ac-stored {
+  font-size: 11px; color: var(--ink); margin-top: 6px;
+  background: var(--panel-3); border: 1.5px solid var(--line);
+  border-radius: 5px; padding: 3px 8px; display: inline-block;
+  overflow-wrap: anywhere;
+}
+.archive-card .ac-stored b { font-weight: 700; }
+.archive-card.err .ac-status { color: var(--err); font-weight: 600; }
+.seal-new {
+  display: inline-block; font-family: var(--serif); font-weight: 900; font-size: 10px;
+  color: #fff; background: var(--seal);
+  border: 2px solid var(--line); border-radius: 5px;
+  padding: 1px 8px; margin-left: 8px;
+  transform: rotate(-3deg); vertical-align: 2px;
+  box-shadow: var(--hard-sm);
+}
+.scanning { color: var(--amber-ink); font-weight: 700; }
+.scanning::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+
+/* ---------------- 右栏：AI 问答 ---------------- */
+.col-chat { background: var(--panel); }
+.chat-target {
+  font-size: 10.5px; font-weight: 700; color: var(--ink);
+  background: var(--panel-3); border: 2px solid var(--line);
+  border-radius: 5px; padding: 2px 8px; letter-spacing: 0.04em;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.chat-log { flex: 1; overflow-y: auto; padding: 18px 18px 10px; }
+
+.chat-empty { text-align: center; padding-top: 14vh; color: var(--muted); font-size: 12.5px; }
+.chat-empty-title {
+  font-family: var(--serif); font-weight: 900; font-size: 20px; color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.msg { margin-bottom: 16px; animation: slideIn 0.3s ease both; }
+.msg .m-role {
+  font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.2em;
+  color: var(--muted); margin-bottom: 5px; text-transform: uppercase;
+}
+.msg.user .m-role { color: var(--seal); }
+.msg .m-body { font-size: 13.5px; word-break: break-word; }
+.msg .m-body pre {
+  background: var(--panel-3); border: 2px solid var(--line); border-radius: 6px;
+  padding: 10px 12px; overflow-x: auto; font-family: var(--mono); font-size: 12px;
+  margin: 8px 0; white-space: pre-wrap;
+  box-shadow: var(--hard-sm);
+}
+.msg .m-body code {
+  font-family: var(--mono); font-size: 12.5px; font-weight: 600;
+  background: var(--panel-3); border: 1.5px solid var(--line);
+  padding: 0 5px; border-radius: 4px;
+}
+.msg .m-body ul { padding-left: 20px; margin: 4px 0; }
+.msg .m-body li { margin-bottom: 2px; }
+.msg .m-body h4 {
+  font-family: var(--serif); font-size: 15px; font-weight: 900;
+  color: var(--ink); margin: 12px 0 4px;
+}
+.msg .m-body h4:first-child { margin-top: 0; }
+.msg.user .m-body {
+  background: var(--amber);
+  border: 2.5px solid var(--line);
+  border-radius: 12px 12px 3px 12px;
+  padding: 10px 13px; color: var(--ink); font-weight: 500; white-space: pre-wrap;
+  box-shadow: var(--hard-sm);
+}
+.msg.assistant .m-body {
+  background: var(--panel);
+  border: 2.5px solid var(--line);
+  border-left: 8px solid var(--seal);
+  border-radius: 3px 12px 12px 12px;
+  padding: 11px 13px;
+  box-shadow: var(--hard-sm);
+}
+.msg .m-sources { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 5px; }
+.src-chip {
+  font-family: var(--mono); font-size: 10px; font-weight: 600; color: var(--ink);
+  background: var(--panel-3); border: 2px solid var(--line);
+  padding: 2px 8px; border-radius: 5px;
+  box-shadow: 1.5px 1.5px 0 var(--line);
+}
+.cursor-blink::after { content: "▍"; color: var(--seal); animation: blink 0.9s steps(2) infinite; }
+.msg-error .m-body { color: var(--err); font-weight: 600; }
+
+.chat-form {
+  display: flex; gap: 8px; padding: 12px 14px;
+  border-top: 3px solid var(--line); background: var(--panel-2);
+}
+.chat-form textarea {
+  flex: 1; resize: none; font-family: var(--sans); font-size: 13px;
+  background: var(--panel); color: var(--ink);
+  border: 2.5px solid var(--line); border-radius: 8px;
+  padding: 9px 12px; outline: none;
+  box-shadow: inset 2px 2px 0 rgba(20, 18, 16, 0.06);
+  transition: box-shadow 0.12s;
+  line-height: 1.5;
+}
+.chat-form textarea:focus { box-shadow: var(--hard); }
+.chat-form textarea:disabled { opacity: 0.45; cursor: not-allowed; }
+.chat-form button {
+  font-family: var(--sans); font-weight: 800; font-size: 13px; color: var(--ink);
+  background: var(--amber); border: 2.5px solid var(--line);
+  border-radius: 8px; padding: 0 18px; cursor: pointer;
+  box-shadow: var(--hard-sm);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.chat-form button:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: var(--hard); }
+.chat-form button:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: none; }
+.chat-form button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------------- 兜底警告横幅 ---------------- */
+.warn-banner {
+  position: fixed; top: 72px; right: 16px; z-index: 300;
+  max-width: 360px;
+  background: var(--err); color: #fff;
+  border: 2.5px solid var(--line); border-radius: 8px;
+  padding: 10px 34px 10px 14px;
+  font-size: 12.5px; font-weight: 600; line-height: 1.5;
+  box-shadow: var(--hard-lg);
+  animation: slideIn 0.25s ease both;
+}
+.warn-banner.info { background: var(--amber); color: var(--ink); }
+.warn-banner .wb-close {
+  position: absolute; top: 4px; right: 6px;
+  background: none; border: none; color: inherit;
+  font-size: 15px; font-weight: 700; cursor: pointer; opacity: 0.8;
+}
+.warn-banner .wb-close:hover { opacity: 1; }
+
+/* ---------------- 设置弹层 ---------------- */
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(20, 18, 16, 0.45); z-index: 100;
+  display: none; place-items: center; backdrop-filter: blur(2px);
+}
+.modal-mask.show { display: grid; }
+.modal {
+  width: min(520px, 92vw); background: var(--panel);
+  border: 3px solid var(--line); border-radius: 12px;
+  padding: 24px 26px; box-shadow: 8px 8px 0 var(--line);
+  animation: slideIn 0.25s ease both;
+}
+.modal h3 { font-family: var(--serif); font-size: 18px; font-weight: 900; margin-bottom: 4px; }
+.modal .m-hint { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.modal label {
+  display: block; font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.12em; color: var(--ink-dim); margin: 12px 0 4px;
+}
+.modal input {
+  width: 100%; background: var(--panel-2); border: 2.5px solid var(--line);
+  color: var(--ink); font-family: var(--mono); font-size: 12.5px;
+  padding: 8px 10px; border-radius: 6px; outline: none;
+  box-shadow: inset 2px 2px 0 rgba(20, 18, 16, 0.06);
+}
+.modal input:focus { box-shadow: var(--hard-sm); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; align-items: center; }
+
+/* 上传目标选择 */
+.target-list {
+  max-height: 200px; overflow-y: auto; margin: 6px 0 4px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.target-opt {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--panel-2); border: 2px solid var(--line);
+  border-radius: 6px; padding: 8px 10px; cursor: pointer;
+  font-size: 13px; font-weight: 700;
+  transition: background 0.12s, box-shadow 0.12s;
+}
+.target-opt:has(input:checked) { background: var(--panel-3); box-shadow: var(--hard-sm); }
+.target-opt input { accent-color: var(--seal); }
+.target-ai {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: var(--ink);
+  margin-right: auto; cursor: pointer;
+}
+.target-ai input { accent-color: var(--seal); }
+
+/* ---------------- 动画 ---------------- */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes dots {
+  0% { content: ""; } 25% { content: "."; }
+  50% { content: ".."; } 75% { content: "..."; }
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--panel-2); }
+::-webkit-scrollbar-thumb {
+  background: var(--line); border-radius: 6px; border: 2.5px solid var(--panel-2);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--amber-deep); }
+
+/* 窄屏降级 */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 240px 1fr; }
+  .col-chat { display: none; }
+}
+
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-seal">档</span>
+    <div class="brand-text">
+      <h1>档库 <em>ARCHIVE · LITE</em></h1>
+      <p class="brand-sub">纯前端单文件版 · 数据只存在本机浏览器</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="mono label" id="stat-line">— 个项目 · — 份文件</span>
+    <button class="btn-ghost-top" id="btn-export">导出</button>
+    <button class="btn-ghost-top" id="btn-import">导入</button>
+    <button class="btn-ghost-top" id="btn-settings">设置</button>
+    <button class="btn-primary" id="btn-upload-top">＋ 归档文件</button>
+    <input type="file" id="file-input" multiple hidden>
+    <input type="file" id="import-input" accept=".json" hidden>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="col col-projects">
+    <div class="col-head">
+      <span class="mono label">索引 / INDEX</span>
+      <button class="btn-ghost" id="btn-new-project">＋ 新建项目</button>
+    </div>
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-inner">
+        <span class="drop-icon">⇲</span>
+        <p>拖拽文件到这里<br><small>归入当前项目，或选择/新建项目</small></p>
+      </div>
+    </div>
+    <nav class="project-list" id="project-list" aria-label="项目列表"></nav>
+  </aside>
+
+  <section class="col col-files">
+    <div class="col-head"><span class="mono label">卷宗 / DOSSIER</span></div>
+    <div id="project-detail" class="project-detail">
+      <div class="empty-state">
+        <div class="empty-glyph">❏</div>
+        <h2>未选择项目</h2>
+        <p>从左侧选择一个项目，或拖入文件开始归档。</p>
+      </div>
+    </div>
+    <div class="upload-tray" id="upload-tray" hidden></div>
+  </section>
+
+  <aside class="col col-chat">
+    <div class="col-head">
+      <span class="mono label">问答 / INQUIRY</span>
+      <span class="chat-target mono" id="chat-target">未选择项目</span>
+    </div>
+    <div class="chat-log" id="chat-log">
+      <div class="chat-empty">
+        <p class="chat-empty-title">AI 档案员</p>
+        <p>选择一个项目后，即可就该项目的全部文件提问。<br>回答基于检索到的项目内容，并标注来源。</p>
+      </div>
+    </div>
+    <form class="chat-form" id="chat-form">
+      <textarea id="chat-input" rows="2" placeholder="选择项目后提问…（Enter 发送，Shift+Enter 换行）" disabled></textarea>
+      <button type="submit" id="chat-send" disabled>发送</button>
+    </form>
+  </aside>
+</main>
+
+<!-- 设置弹层 -->
+<div class="modal-mask" id="settings-mask">
+  <div class="modal">
+    <h3>AI 接口设置</h3>
+    <p class="m-hint">配置保存在本机 localStorage。密钥仅存于本机，但请注意：纯前端版本的密钥对能打开此文件的人可见，请勿公开分享含密钥的文件。</p>
+    <label>接口地址 BASE URL</label>
+    <input id="cfg-base" placeholder="https://.../anthropic">
+    <label>API KEY</label>
+    <input id="cfg-key" type="password" placeholder="tp-...">
+    <label>模型（留空自动探测）</label>
+    <input id="cfg-model" placeholder="mimo-v2.5-pro">
+    <label>接口连通性</label>
+    <div class="folder-row">
+      <span id="cfg-status">未测试</span>
+      <button class="btn-ghost" id="cfg-test">测试连接</button>
+    </div>
+    <label>归档文件夹（上传原件的写入位置）</label>
+    <div class="folder-row">
+      <span id="cfg-folder">未连接</span>
+      <button class="btn-ghost" id="cfg-folder-btn">选择文件夹</button>
+    </div>
+    <p class="folder-hint">原件按「文件夹 / 项目名 / 文件名」保存。首次选择后终身自动写入、不再询问；曾取消也可随时点此按钮连接。受浏览器安全限制，此处仅能显示文件夹名称。</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="cfg-cancel">取消</button>
+      <button class="btn-primary" id="cfg-save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建项目 -->
+<div class="modal-mask" id="newproj-mask">
+  <div class="modal">
+    <h3>新建项目</h3>
+    <p class="m-hint">先建项目，再往里面上传相关文档。</p>
+    <label>项目名称 *</label>
+    <input id="np-name" placeholder="如：智慧社区管理平台">
+    <label>一句话简介（可选）</label>
+    <input id="np-summary" placeholder="这个项目是做什么的">
+    <div class="modal-actions">
+      <button class="btn-ghost" id="np-cancel">取消</button>
+      <button class="btn-primary" id="np-create">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 上传目标选择（未选中项目时弹出） -->
+<div class="modal-mask" id="target-mask">
+  <div class="modal">
+    <h3>上传到哪个项目？</h3>
+    <p class="m-hint">选择已有项目、新建一个，或让 AI 自动识别归属。</p>
+    <div class="target-list" id="target-list"></div>
+    <label>或新建项目名称</label>
+    <input id="target-newname" placeholder="留空则不新建">
+    <div class="modal-actions">
+      <label class="target-ai"><input type="radio" name="target-mode" value="ai" id="target-ai"> 让 AI 自动识别归属</label>
+      <button class="btn-ghost" id="target-cancel">取消</button>
+      <button class="btn-primary" id="target-ok">开始上传</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==================================================================
+   档库 ARCHIVE · LITE — 纯前端实现
+   存储: IndexedDB（不可用时降级 localStorage）
+   检索: 内置 BM25（中文二元分词）
+   AI:   浏览器直连 Anthropic 兼容接口（流式）
+   ================================================================== */
+
+/* ---------------- 配置 ---------------- */
+const DEFAULT_CONFIG = {
+  baseUrl: "https://token-plan-cn.xiaomimimo.com/anthropic",
+  apiKey: "***REMOVED***",
+  model: "", // 留空则自动探测
+};
+const MODEL_CANDIDATES = ["mimo-v2.5-pro", "mimo-v2.5"];
+const CHUNK_SIZE = 800, CHUNK_OVERLAP = 100, PREVIEW_LIMIT = 4000;
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const TOP_K = 8;
+
+function getConfig() {
+  try {
+    return { ...DEFAULT_CONFIG, ...JSON.parse(localStorage.getItem("archive_cfg") || "{}") };
+  } catch { return { ...DEFAULT_CONFIG }; }
+}
+function setConfig(cfg) { localStorage.setItem("archive_cfg", JSON.stringify(cfg)); }
+
+const $ = (s) => document.querySelector(s);
+
+/* 全局警告横幅（兜底提示）；sticky 时需手动关闭 */
+const _bannersShown = new Set();
+function showBanner(msg, { sticky = false, key = "" } = {}) {
+  if (key) {
+    if (_bannersShown.has(key)) return;
+    _bannersShown.add(key);
+  }
+  const el = document.createElement("div");
+  el.className = "warn-banner" + (sticky ? "" : " info");
+  el.innerHTML = `<span></span><button class="wb-close" title="关闭">✕</button>`;
+  el.querySelector("span").textContent = msg;
+  el.querySelector(".wb-close").addEventListener("click", () => el.remove());
+  document.body.appendChild(el);
+  if (!sticky) setTimeout(() => el.remove(), 9000);
+}
+
+/* ================= 存储层：IndexedDB + localStorage 降级 ================= */
+const Store = {
+  _db: null,
+  _fallback: false,
+  _mem: { projects: [], files: [], chunks: [], messages: [] },
+  COLLS: ["projects", "files", "chunks", "messages"],
+
+  async init() {
+    try {
+      this._db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open("archive-lite", 2);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          const mk = (name, opts) => {
+            if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, opts);
+          };
+          mk("projects", { keyPath: "id", autoIncrement: true });
+          mk("files", { keyPath: "id", autoIncrement: true });
+          mk("chunks", { keyPath: "id", autoIncrement: true });
+          mk("messages", { keyPath: "id", autoIncrement: true });
+          mk("meta", { keyPath: "key" });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+        setTimeout(() => reject(new Error("idb timeout")), 3000);
+      });
+    } catch {
+      this._fallback = true;
+      try {
+        const raw = localStorage.getItem("archive_data");
+        if (raw) this._mem = JSON.parse(raw);
+      } catch { /* 从空开始 */ }
+      console.warn("[store] IndexedDB 不可用，降级 localStorage");
+    }
+  },
+
+  async all(coll) {
+    if (this._fallback) return [...this._mem[coll]];
+    return new Promise((resolve, reject) => {
+      const tx = this._db.transaction(coll, "readonly");
+      const req = tx.objectStore(coll).getAll();
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async add(coll, obj) {
+    if (this._fallback) {
+      const id = (this._mem[coll].reduce((m, r) => Math.max(m, r.id), 0) || 0) + 1;
+      const rec = { ...obj, id };
+      this._mem[coll].push(rec);
+      this._persist();
+      return id;
+    }
+    return new Promise((resolve, reject) => {
+      const tx = this._db.transaction(coll, "readwrite");
+      const req = tx.objectStore(coll).add(obj);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async bulkAdd(coll, objs) {
+    for (const o of objs) await this.add(coll, o);
+  },
+
+  async put(coll, obj) {
+    if (this._fallback) {
+      const i = this._mem[coll].findIndex((r) => r.id === obj.id);
+      if (i >= 0) this._mem[coll][i] = obj; else this._mem[coll].push(obj);
+      this._persist();
+      return obj.id;
+    }
+    return new Promise((resolve, reject) => {
+      const tx = this._db.transaction(coll, "readwrite");
+      const req = tx.objectStore(coll).put(obj);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async remove(coll, id) {
+    if (this._fallback) {
+      this._mem[coll] = this._mem[coll].filter((r) => r.id !== id);
+      this._persist();
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      const tx = this._db.transaction(coll, "readwrite");
+      const req = tx.objectStore(coll).delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async clearAll() {
+    if (this._fallback) {
+      this._mem = { projects: [], files: [], chunks: [], messages: [] };
+      this._persist();
+      return;
+    }
+    for (const c of this.COLLS) {
+      await new Promise((resolve, reject) => {
+        const tx = this._db.transaction(c, "readwrite");
+        const req = tx.objectStore(c).clear();
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+  },
+
+  async getMeta(key) {
+    if (this._fallback || !this._db) return null;
+    return new Promise((resolve) => {
+      try {
+        const req = this._db.transaction("meta", "readonly").objectStore("meta").get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      } catch { resolve(null); }
+    });
+  },
+
+  async setMeta(key, value) {
+    if (this._fallback || !this._db) return;
+    return new Promise((resolve) => {
+      try {
+        const tx = this._db.transaction("meta", "readwrite");
+        tx.objectStore("meta").put({ key, ...value });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      } catch { resolve(); }
+    });
+  },
+
+  _persist() {
+    try {
+      localStorage.setItem("archive_data", JSON.stringify(this._mem));
+    } catch (e) {
+      console.warn("localStorage 空间不足", e);
+      showBanner(
+        "浏览器存储空间不足，部分数据可能未保存！请立即用「导出」备份，或连接归档文件夹后清理项目。",
+        { sticky: true, key: "persist" }
+      );
+    }
+  },
+};
+
+/* ================= 归档文件夹（File System Access API） =================
+   用户选择一个本地文件夹后，上传的原件会写入 <文件夹>/<项目名>/<文件名>。
+   浏览器安全限制：网页只能显示文件夹名称，不能获取完整路径。 */
+const FolderStore = {
+  handle: null,
+  perm: "none",        // none | prompt | granted | denied（句柄权限态）
+  declined: false,     // 用户曾取消自动询问：此后永不再自动弹
+  supported: typeof window.showDirectoryPicker === "function",
+
+  get folderName() { return this.handle ? this.handle.name : ""; },
+
+  async restore() {
+    if (!this.supported) return false;
+    const rec = await Store.getMeta("archiveDir");
+    let declined = !!(rec && rec.declined);
+    if (!declined) {
+      // localStorage 镜像：IndexedDB 降级模式下 declined 也能跨刷新记住
+      try { declined = localStorage.getItem("archive_declined") === "1"; } catch {}
+    }
+    this.declined = declined;
+    if (rec && rec.handle) {
+      this.declined = false; // 已连接与拒绝互斥，句柄优先
+      this.handle = rec.handle;
+      try {
+        const q = await this.handle.queryPermission({ mode: "readwrite" });
+        if (q === "granted") { this.perm = "granted"; return true; }
+        this.perm = q === "prompt" ? "prompt" : "denied";
+        return false;
+      } catch {
+        // 句柄失效：丢弃，避免 UI 假显示"已连接"。
+        // 不写 meta（可能已被另一标签页换成新句柄，覆盖会丢别人的句柄），仅用 LS 镜像 declined
+        this.handle = null;
+        this.perm = "none";
+        if (this.declined) { try { localStorage.setItem("archive_declined", "1"); } catch {} }
+        return false;
+      }
+    }
+    return false;
+  },
+
+  /* 拒绝态持久化：IDB + localStorage 双写；若 meta 已有句柄（另一标签页连接过）则句柄优先不写拒绝 */
+  async _writeDeclined() {
+    this.declined = true;
+    try { localStorage.setItem("archive_declined", "1"); } catch {}
+    const cur = await Store.getMeta("archiveDir");
+    if (cur && cur.handle) return; // 句柄优先
+    await Store.setMeta("archiveDir", { declined: true });
+  },
+
+  async pick() {
+    const oldHandle = this.handle;
+    const nh = await window.showDirectoryPicker({ mode: "readwrite" });
+    this.handle = nh;
+    this.declined = false;
+    this.perm = "granted";
+    try { localStorage.removeItem("archive_declined"); } catch {}
+    await Store.setMeta("archiveDir", { handle: nh }); // put 整条覆盖，天然清除 declined
+    // "更改"文件夹：把已归档原件迁移到新根（旧根按同名目录启发式跳过，防自拷贝）
+    if (oldHandle && oldHandle !== nh && oldHandle.name !== nh.name) {
+      await this._migrateFrom(oldHandle);
+    }
+    return nh;
+  },
+
+  /* 把 rec.folderRel 指向的原件从旧根复制到新根，并尽力删除旧件 */
+  async _migrateFrom(oldHandle) {
+    try {
+      const recs = (await Store.all("files")).filter((r) => r.folderRel);
+      for (const rec of recs) {
+        try {
+          const i = rec.folderRel.indexOf("/");
+          if (i < 0) continue;
+          const dirName = rec.folderRel.slice(0, i);
+          const fileName = rec.folderRel.slice(i + 1);
+          const odir = await oldHandle.getDirectoryHandle(dirName);
+          const ofh = await odir.getFileHandle(fileName);
+          const blob = await ofh.getFile();
+          const ndir = await this.handle.getDirectoryHandle(dirName, { create: true });
+          const nfh = await ndir.getFileHandle(fileName, { create: true });
+          const w = await nfh.createWritable();
+          await w.write(blob);
+          await w.close();
+          try { await odir.removeEntry(fileName); } catch {}
+        } catch { /* 单个迁移失败不阻塞其余 */ }
+      }
+    } catch { /* 迁移整体失败不影响新连接使用 */ }
+  },
+
+  async _ensurePermission() {
+    if (!this.handle) return false;
+    try {
+      const q = await this.handle.queryPermission({ mode: "readwrite" });
+      if (q === "granted") { this.perm = "granted"; return true; }
+      if (q === "denied") { this.perm = "denied"; return false; }
+      const r = await this.handle.requestPermission({ mode: "readwrite" });
+      this.perm = r === "granted" ? "granted" : "prompt";
+      return r === "granted";
+    } catch { return false; }
+  },
+
+  /* 仅查询权限（无手势场景用，绝不 requestPermission） */
+  async _queryOnly() {
+    if (!this.handle) return false;
+    try {
+      const q = await this.handle.queryPermission({ mode: "readwrite" });
+      this.perm = q === "granted" ? "granted" : q === "prompt" ? "prompt" : "denied";
+      return this.perm === "granted";
+    } catch {
+      this.perm = "none";
+      this.handle = null;
+      return false;
+    }
+  },
+
+  /* 上传手势内调用：连接门状态机（核心：终身只问一次，取消永不再问） */
+  async ensureConnected() {
+    if (!this.supported) return false;
+    if (this.handle) return this._ensurePermission(); // 权限续期提前到手势内
+    if (this.declined) return false;                  // 已拒绝：静默，绝不重弹
+    try {
+      await this.pick();
+      return true;
+    } catch {
+      await this._writeDeclined();                     // 取消/Esc/报错 → 永久记住（不覆盖他页句柄）
+      return false;
+    }
+  },
+
+  _sanitize(name) {
+    return String(name).replace(/[\\/:*?"<>|]/g, "_").replace(/[. ]+$/g, "").trim() || "未命名";
+  },
+
+  /* 写入原件，成功返回 {display, rel}（rel = "项目名/文件名"，用于之后删除），失败返回 null */
+  async save(projectName, file) {
+    if (!this.handle) return null;
+    if (!(await this._ensurePermission())) return null;
+    try {
+      const dirName = this._sanitize(projectName);
+      const dir = await this.handle.getDirectoryHandle(dirName, { create: true });
+      const base = this._sanitize(file.name);
+      const dot = base.lastIndexOf(".");
+      const stem = dot > 0 ? base.slice(0, dot) : base;
+      const ext = dot > 0 ? base.slice(dot) : "";
+      // 同名文件追加序号，避免覆盖
+      let name = base;
+      for (let i = 1; i < 100; i++) {
+        try {
+          await dir.getFileHandle(name, { create: false });
+          name = `${stem}(${i})${ext}`;
+        } catch { break; }
+      }
+      const fh = await dir.getFileHandle(name, { create: true });
+      const w = await fh.createWritable();
+      await w.write(file);
+      await w.close();
+      return { display: `${this.folderName}/${dirName}/${name}`, rel: `${dirName}/${name}` };
+    } catch (e) {
+      console.warn("[folder] 写入失败:", e);
+      return null;
+    }
+  },
+
+  /* 删除已写入的原件，rel = "项目名/文件名" */
+  async removeFile(rel) {
+    if (!this.handle || !rel) return false;
+    if (!(await this._ensurePermission())) return false;
+    const i = rel.indexOf("/");
+    if (i < 0) return false;
+    try {
+      const dir = await this.handle.getDirectoryHandle(rel.slice(0, i), { create: false });
+      await dir.removeEntry(rel.slice(i + 1));
+      return true;
+    } catch (e) {
+      console.warn("[folder] 删除原件失败:", e);
+      return false;
+    }
+  },
+
+  /* 删除整个项目文件夹 */
+  async removeProjectDir(dirName) {
+    if (!this.handle) return false;
+    if (!(await this._ensurePermission())) return false;
+    try {
+      await this.handle.removeEntry(dirName, { recursive: true });
+      return true;
+    } catch {
+      return false; // 文件夹可能不存在
+    }
+  },
+};
+
+/* ================= 文本提取与分块 ================= */
+const TEXT_EXTS = new Set([
+  "txt","md","markdown","csv","tsv","json","yaml","yml","toml","ini","cfg","log","rst",
+  "py","js","ts","tsx","jsx","java","c","cpp","h","hpp","cs","go","rs","rb","php","sh",
+  "bat","ps1","sql","r","html","css","vue","swift","kt","scala","lua","pl","xml","svg",
+  "env","gitignore","dockerfile","makefile",
+]);
+const PDFJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+const PDFJS_WORKER = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const MAMMOTH_URL = "https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js";
+
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = url; s.onload = resolve; s.onerror = () => reject(new Error("加载失败: " + url));
+    document.head.appendChild(s);
+  });
+}
+
+async function extractText(file) {
+  const name = file.name;
+  const ext = (name.includes(".") ? name.split(".").pop() : "").toLowerCase();
+  const lower = name.toLowerCase();
+
+  if (ext === "pdf") {
+    if (!window.pdfjsLib) {
+      await loadScript(PDFJS_URL);
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+    }
+    const buf = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    let out = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      out += content.items.map((it) => it.str).join(" ") + "\n\n";
+    }
+    return out;
+  }
+
+  if (ext === "docx") {
+    if (!window.mammoth) await loadScript(MAMMOTH_URL);
+    const buf = await file.arrayBuffer();
+    const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+    return result.value;
+  }
+
+  if (TEXT_EXTS.has(ext) || ext === "" || ["dockerfile", "makefile", "license"].includes(lower)) {
+    return await readTextFile(file);
+  }
+  throw new Error(`暂不支持的文件类型：.${ext || "?"}`);
+}
+
+async function readTextFile(file) {
+  const buf = await file.arrayBuffer();
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buf);
+  } catch {
+    try { return new TextDecoder("gbk").decode(buf); }
+    catch { return new TextDecoder("utf-8").decode(buf); }
+  }
+}
+
+function chunkText(text) {
+  text = (text || "").trim();
+  if (!text) return [];
+  const paras = text.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+  const chunks = [];
+  let buf = "";
+  for (let para of paras) {
+    while (para.length > CHUNK_SIZE) {
+      if (buf) { chunks.push(buf); buf = ""; }
+      chunks.push(para.slice(0, CHUNK_SIZE));
+      para = para.slice(CHUNK_SIZE - CHUNK_OVERLAP);
+    }
+    if (buf && buf.length + para.length + 2 > CHUNK_SIZE) {
+      chunks.push(buf);
+      const tail = buf.slice(-CHUNK_OVERLAP);
+      buf = tail ? tail + "\n\n" + para : para;
+    } else {
+      buf = buf ? buf + "\n\n" + para : para;
+    }
+  }
+  if (buf) chunks.push(buf);
+  return chunks;
+}
+
+/* ================= 检索：BM25（中文二元分词） ================= */
+function tokenize(text) {
+  const lower = (text || "").toLowerCase();
+  const tokens = [];
+  for (const m of lower.matchAll(/[a-z0-9_]+/g)) tokens.push(m[0]);
+  const cjkSegs = lower.match(/[一-鿿㐀-䶿]+/g) || [];
+  for (const seg of cjkSegs) {
+    if (seg.length === 1) tokens.push(seg);
+    else for (let i = 0; i < seg.length - 1; i++) tokens.push(seg.slice(i, i + 2));
+  }
+  return tokens;
+}
+
+function bm25Search(chunks, question, topK = TOP_K) {
+  if (!chunks.length) return [];
+  if (chunks.length <= topK) return chunks.map((c) => ({ ...c, score: 0 }));
+
+  const k1 = 1.5, b = 0.75;
+  const docs = chunks.map((c) => tokenize(c.content));
+  const N = docs.length;
+  const avgLen = docs.reduce((s, d) => s + d.length, 0) / N;
+  const df = new Map();
+  for (const d of docs) {
+    for (const t of new Set(d)) df.set(t, (df.get(t) || 0) + 1);
+  }
+  const qTokens = tokenize(question);
+  const scored = chunks.map((c, i) => {
+    const d = docs[i];
+    const tf = new Map();
+    for (const t of d) tf.set(t, (tf.get(t) || 0) + 1);
+    let score = 0;
+    for (const qt of qTokens) {
+      const f = tf.get(qt);
+      if (!f) continue;
+      const n = df.get(qt) || 0;
+      const idf = Math.log(1 + (N - n + 0.5) / (n + 0.5));
+      score += idf * (f * (k1 + 1)) / (f + k1 * (1 - b + b * d.length / avgLen));
+    }
+    return { ...c, score };
+  });
+  scored.sort((a, b2) => b2.score - a.score);
+  const hits = scored.filter((c) => c.score > 0).slice(0, topK);
+  return hits.length ? hits : scored.slice(0, Math.min(3, topK)).map((c) => ({ ...c, score: 0 }));
+}
+
+/* ================= AI 客户端 ================= */
+const AI = {
+  _model: null,
+
+  async detectModel() {
+    const cfg = getConfig();
+    if (cfg.model) return cfg.model;
+    if (this._model) return this._model;
+    for (const m of MODEL_CANDIDATES) {
+      try {
+        const resp = await this._raw({ model: m, max_tokens: 8, messages: [{ role: "user", content: "hi" }] });
+        if (resp.ok) { this._model = m; console.log("[ai] 模型:", m); return m; }
+      } catch { /* 下一个 */ }
+    }
+    throw new Error("无法连接 AI 接口或无可用模型，请检查设置");
+  },
+
+  async _raw(body) {
+    const cfg = getConfig();
+    return fetch(cfg.baseUrl.replace(/\/$/, "") + "/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": cfg.apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(body),
+    });
+  },
+
+  async _create(body, signal) {
+    const cfg = getConfig();
+    const url = cfg.baseUrl.replace(/\/$/, "") + "/v1/messages";
+    const headers = {
+      "content-type": "application/json",
+      "x-api-key": cfg.apiKey,
+      "anthropic-version": "2023-06-01",
+    };
+    let resp = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        resp = await fetch(url, {
+          method: "POST", headers, body: JSON.stringify(body), signal,
+        });
+      } catch (e) {
+        if (attempt === 0 && e.name !== "AbortError") {
+          await new Promise((r) => setTimeout(r, 1200));
+          continue; // 网络错误重试一次
+        }
+        throw new Error("网络错误，无法连接 AI 接口");
+      }
+      if (resp.status === 429 || resp.status >= 500) {
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 1500));
+          continue; // 限流/服务端错误重试一次
+        }
+      }
+      break;
+    }
+    if (!resp.ok) {
+      let msg = `HTTP ${resp.status}`;
+      try { msg = (await resp.json()).error?.message || msg; } catch {}
+      if (resp.status === 401) msg = "API Key 无效（401），请在设置中检查";
+      else if (resp.status === 400 && /Unsupported model/i.test(msg)) {
+        this._model = null;
+        throw new Error(`模型不可用: ${body.model}，请在设置中更换模型`);
+      }
+      else if (resp.status === 429) msg = "请求过于频繁（429），稍后再试";
+      else if (resp.status >= 500) msg = `AI 服务暂时不可用（${resp.status}），稍后再试`;
+      throw new Error(msg);
+    }
+    return resp;
+  },
+
+  async classify(filename, preview, projects) {
+    const model = await this.detectModel();
+    const lines = projects.length
+      ? projects.map((p) => `- id=${p.id}: ${p.name}（${p.summary || "暂无简介"}）`).join("\n")
+      : "（暂无已有项目）";
+    const prompt = `你是项目归档助手。根据文件内容判断它属于哪个已有项目，或应新建什么项目。
+
+已有项目列表：
+${lines}
+
+文件名：${filename}
+文件内容开头：
+"""${preview.slice(0, PREVIEW_LIMIT)}"""
+
+判断原则（重要）：
+- 归档单位是"产品/项目"本身：同一产品或系统的全部资料——需求文档(PRD)、设计稿、源码、README、
+  测试报告、面试逐字稿、分享稿、学习笔记——都属于同一个项目，应归入同一项目。
+- 例：「智慧社区管理平台」的 PRD 与「智慧社区管理平台面试逐字稿」是同一项目，
+  应 match 到已有项目（或用同一个 new_project_name），绝不拆成两个项目。
+- 只有当文件属于完全不同的产品/系统/主题时，才视为不同项目。
+
+只输出一个 JSON 对象，不要输出其他文字，格式：
+{
+  "match_project_id": <已有项目的 id，若不属于任何已有项目则为 null>,
+  "new_project_name": <仅当不匹配任何已有项目时，给出简短的中文项目名，否则为 null>,
+  "summary": <一两句话概括该文件/所属项目是做什么的>,
+  "tags": ["标签1", "标签2"],
+  "reason": <一句话说明归档理由>
+}`;
+    const resp = await this._create({
+      model, max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const data = await resp.json();
+    const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+    return extractJson(text);
+  },
+
+  /* 生成详尽项目介绍（流式收集） */
+  async generateIntro(projectName, fileNames, texts) {
+    const model = await this.detectModel();
+    const joined = texts.filter(Boolean).join("\n\n").slice(0, 24000);
+    const filesLine = fileNames.slice(0, 80).join("、") || "（暂无）";
+    const prompt = `你是资深技术文档作者。请根据下面的项目文件内容，撰写一份详尽的中文项目介绍。
+
+项目名称：${projectName}
+包含文件：${filesLine}
+
+文件内容：
+${joined}
+
+写作要求：
+- 尽量长而充实，1000～1500字；只写文件内容能支撑的细节，不要空话套话。
+- 用 Markdown 二级标题（##）分节，按内容取舍这些小节：
+  ## 项目概述、## 核心功能与模块、## 技术要点与架构、## 关键参数与数据、## 文件清单说明、## 注意事项
+- 某一节文件里没有对应内容就整节省略，不要编造。
+- 只输出介绍正文。`;
+    const resp = await this._create({
+      model, max_tokens: 8192,
+      messages: [{ role: "user", content: prompt }],
+      stream: true,
+    });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "", rawAll = "", gotText = false;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      rawAll += chunk;
+      buffer += chunk;
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        let evt;
+        try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") gotText = true;
+      }
+    }
+    if (!gotText) {
+      try {
+        const data = JSON.parse(rawAll);
+        const text = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+        if (text) return text;
+      } catch { /* ignore */ }
+    }
+    // 从 SSE 原文中重新提取全部文本
+    let out = "";
+    for (const line of rawAll.split("\n")) {
+      if (!line.startsWith("data:")) continue;
+      try {
+        const evt = JSON.parse(line.slice(5).trim());
+        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") out += evt.delta.text;
+      } catch { /* ignore */ }
+    }
+    if (!out) throw new Error("介绍生成未返回内容");
+    return out;
+  },
+
+  async *chatStream(question, project, contexts, history, signal) {
+    const model = await this.detectModel();
+    const ctx = contexts.length
+      ? contexts.map((c) => `【来源文件：${c.filename}】\n${c.content}`).join("\n\n")
+      : "（该项目暂无可检索的文件内容）";
+    const system = `你是项目归档库中的 AI 助手，负责回答关于项目「${project.name}」的问题。
+项目介绍（由项目文件自动整理，回答时可作为全局背景参考）：
+${project.intro || project.summary || "（暂无）"}
+
+以下是根据问题从项目文件中检索到的相关内容，回答时基于它们，并在合适处标注来源文件名：
+${ctx}
+
+要求：仅根据检索内容和对话历史回答；信息不足时明确说明，不要编造。用中文回答。`;
+
+    const msgs = history.filter((m) => m.role === "user" || m.role === "assistant").slice(-10);
+    msgs.push({ role: "user", content: question });
+
+    const resp = await this._create(
+      { model, max_tokens: 8192, system, messages: msgs, stream: true },
+      signal
+    );
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let gotText = false;
+    let rawAll = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      rawAll += chunk;
+      buffer += chunk;
+      const lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        let evt;
+        try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+          gotText = true;
+          yield evt.delta.text;
+        }
+      }
+    }
+    // 兜底：代理若忽略 stream 参数返回普通 JSON，从整体响应中提取文本
+    if (!gotText) {
+      try {
+        const data = JSON.parse(rawAll);
+        const text = (data.content || [])
+          .filter((b) => b.type === "text").map((b) => b.text).join("");
+        if (text) yield text;
+      } catch { /* 非 JSON，忽略 */ }
+    }
+  },
+};
+
+function extractJson(text) {
+  let t = text.trim();
+  if (t.startsWith("```")) t = t.replace(/^```(?:json)?\s*|\s*```$/g, "");
+  try { return JSON.parse(t); } catch {}
+  const m = t.match(/\{[\s\S]*\}/);
+  if (m) return JSON.parse(m[0]);
+  throw new Error("AI 返回的不是有效 JSON");
+}
+
+/* ================= 应用状态 ================= */
+const state = { projects: [], files: [], currentId: null, busyIds: new Set() };
+const _introInflight = new Set(); // 正在生成介绍的项目 id
+
+/* ================= 渲染 ================= */
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function md(src) {
+  let s = esc(src);
+  const blocks = [];
+  s = s.replace(/```[\w-]*\n?([\s\S]*?)```/g, (_, code) => {
+    blocks.push(`<pre>${code.trim()}</pre>`);
+    return `\u0000${blocks.length - 1}\u0000`;
+  });
+  s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/^#{1,4}\s+(.*)$/gm, "<h4>$1</h4>");
+  s = s.replace(/((?:^[-*•]\s+.*$\n?)+)/gm, (m) => {
+    const items = m.trim().split("\n").map((l) => `<li>${l.replace(/^[-*•]\s+/, "")}</li>`).join("");
+    return `<ul>${items}</ul>`;
+  });
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>"); // 行内斜体（避开列表星号）
+  s = s.replace(/\u0000(\d+)\u0000/g, (_, i) => blocks[i]);
+  s = s.replace(/\n/g, "<br>")
+    .replace(/<br>(<ul>|<pre>|<h4>)/g, "$1")
+    .replace(/(<\/ul>|<\/pre>|<\/h4>)<br>/g, "$1");
+  return s;
+}
+function fmtSize(n) {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+function fmtTime(ts) {
+  return new Date(ts).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+async function refreshData() {
+  state.projects = (await Store.all("projects")).sort((a, b) => b.createdAt - a.createdAt);
+  state.files = await Store.all("files");
+  renderProjectList();
+  renderStat();
+  if (window.__bootDone) dataChanged();
+}
+
+function renderStat() {
+  $("#stat-line").textContent = `${state.projects.length} 个项目 · ${state.files.length} 份文件`;
+}
+
+function projectStats(pid) {
+  const files = state.files.filter((f) => f.projectId === pid);
+  return { fileCount: files.length, chunkCount: files.reduce((s, f) => s + (f.chunkCount || 0), 0) };
+}
+
+function renderProjectList() {
+  const list = $("#project-list");
+  if (!state.projects.length) {
+    list.innerHTML = `<p class="empty-note">尚无归档项目<br>拖入文件，AI 将自动建立第一个项目</p>`;
+    return;
+  }
+  list.innerHTML = state.projects.map((p, i) => {
+    const st = projectStats(p.id);
+    return `
+    <button class="project-item ${p.id === state.currentId ? "active" : ""}"
+            data-id="${p.id}" style="animation-delay:${i * 40}ms">
+      <span class="p-idx">№ ${String(p.id).padStart(3, "0")}</span>
+      <span class="p-name">${esc(p.name)}</span>
+      <span class="p-meta"><b>${st.fileCount}</b> 份文件 · ${st.chunkCount} 个片段</span>
+    </button>`;
+  }).join("");
+  list.querySelectorAll(".project-item").forEach((el) =>
+    el.addEventListener("click", () => selectProject(Number(el.dataset.id))));
+}
+
+async function selectProject(id) {
+  state.currentId = id;
+  renderProjectList();
+  const p = state.projects.find((x) => x.id === id);
+  if (!p) return;
+  const files = state.files.filter((f) => f.projectId === id)
+    .sort((a, b) => b.uploadedAt - a.uploadedAt);
+  renderDetail(p, files);
+  const messages = (await Store.all("messages")).filter((m) => m.projectId === id).sort((a, b) => a.id - b.id);
+  renderChatHistory(messages, p);
+  $("#chat-target").textContent = p.name;
+  $("#chat-input").disabled = false;
+  $("#chat-send").disabled = state.busyIds.has(id);
+  $("#chat-input").placeholder = `就「${p.name}」提问…（Enter 发送）`;
+  ensureIntro(p, files.length);
+}
+
+/* ---- AI 项目介绍：缺失或文件数变化时自动生成 ---- */
+function renderIntro(project) {
+  const body = $("#intro-body");
+  if (!body) return;
+  body.className = "intro-card";
+  body.innerHTML = project.intro ? md(project.intro) : "尚未生成介绍。";
+}
+
+async function ensureIntro(project, fileCount) {
+  const body = $("#intro-body");
+  if (!body) return;
+  if (fileCount === 0) {
+    body.className = "intro-card";
+    body.innerHTML = "项目内暂无文件，生成介绍后将显示在这里。";
+    return;
+  }
+  if (project.intro && project.introFiles === fileCount) {
+    renderIntro(project);
+    return;
+  }
+  if (_introInflight.has(project.id)) return; // 已有生成在进行，切回来时由它接管渲染
+  body.className = "intro-loading";
+  body.textContent = "AI 正在撰写项目介绍";
+  _introInflight.add(project.id);
+  try {
+    const chunks = (await Store.all("chunks"))
+      .filter((c) => c.projectId === project.id)
+      .sort((a, b) => a.seq - b.seq);
+    const names = state.files.filter((f) => f.projectId === project.id).map((f) => f.filename);
+    const text = await AI.generateIntro(project.name, names, chunks.map((c) => c.content));
+    // 生成期间项目可能已被删除，避免"复活"已删项目
+    if (!state.projects.some((x) => x.id === project.id)) return;
+    project.intro = text;
+    project.introFiles = fileCount;
+    project.introAt = Date.now();
+    await Store.put("projects", project);
+    if (state.currentId === project.id) renderIntro(project);
+    await refreshData();
+  } catch (err) {
+    const b = document.getElementById("intro-body");
+    if (b && state.currentId === project.id) {
+      b.className = "intro-card";
+      b.innerHTML = `<span style="color:var(--err)">介绍生成失败：${esc(err.message)}（可点「重新生成」重试）</span>`;
+    }
+  } finally {
+    _introInflight.delete(project.id);
+  }
+}
+
+async function regenerateIntro(project, fileCount) {
+  if (_introInflight.has(project.id)) return;
+  const body = $("#intro-body");
+  if (!body) return;
+  body.className = "intro-loading";
+  body.textContent = "AI 正在重新撰写项目介绍";
+  _introInflight.add(project.id);
+  try {
+    const chunks = (await Store.all("chunks"))
+      .filter((c) => c.projectId === project.id)
+      .sort((a, b) => a.seq - b.seq);
+    const names = state.files.filter((f) => f.projectId === project.id).map((f) => f.filename);
+    const text = await AI.generateIntro(project.name, names, chunks.map((c) => c.content));
+    if (!state.projects.some((x) => x.id === project.id)) return; // 生成期间项目已被删除
+    project.intro = text;
+    project.introFiles = fileCount;
+    project.introAt = Date.now();
+    await Store.put("projects", project);
+    if (state.currentId === project.id) renderIntro(project);
+    dataChanged();
+  } catch (err) {
+    const b = document.getElementById("intro-body");
+    if (b && state.currentId === project.id) {
+      b.className = "intro-card";
+      b.innerHTML = `<span style="color:var(--err)">介绍生成失败：${esc(err.message)}（可点「重新生成」重试）</span>`;
+    }
+  } finally {
+    _introInflight.delete(project.id);
+  }
+}
+
+function renderDetail(p, files) {
+  const tags = (p.tags || []).filter(Boolean);
+  const rows = files.map((f, i) => `
+    <div class="file-row" style="animation-delay:${i * 30}ms">
+      <span class="file-badge">${esc(f.kind || "txt")}</span>
+      <div class="file-info">
+        <div class="file-name" title="${esc(f.filename)}">${esc(f.filename)}</div>
+        <div class="file-meta">${fmtSize(f.size)} · ${fmtTime(f.uploadedAt)}</div>
+      </div>
+      <button class="file-del" data-fid="${f.id}" title="删除文件">✕</button>
+    </div>`).join("");
+
+  $("#project-detail").innerHTML = `
+    <div class="detail-head">
+      <span class="d-idx">DOSSIER № ${String(p.id).padStart(3, "0")}</span>
+      <h2>${esc(p.name)}</h2>
+      <p class="d-summary">${esc(p.summary || "暂无简介")}</p>
+      ${tags.length ? `<div class="tag-row">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+      <div class="detail-actions">
+        <button class="btn-ghost" id="btn-edit-project">✏️ 编辑名称简介</button>
+        <button class="btn-ghost btn-danger" id="btn-del-project">删除项目</button>
+      </div>
+      <p class="d-storage mono">${FolderStore.handle
+        ? `原件存放于 ${esc(FolderStore.folderName)} / ${esc(p.folderDir || FolderStore._sanitize(p.name))} /`
+        : "原件存于浏览器数据库 · 可在「设置」中连接本地文件夹"}</p>
+    </div>
+    <div class="intro-head">
+      <span class="files-label">项目介绍 / INTRODUCTION</span>
+      <button class="btn-ghost" id="btn-intro-regen">重新生成</button>
+    </div>
+    <div id="intro-body" class="intro-loading">AI 正在撰写项目介绍</div>
+    <div class="files-label">文件清单 / ${files.length} ITEMS</div>
+    ${rows || `<p class="empty-note">项目内暂无文件</p>`}`;
+
+  $("#btn-intro-regen").addEventListener("click", () => regenerateIntro(p, files.length));
+  $("#btn-edit-project").addEventListener("click", () => openEditProject(p));
+
+  $("#btn-del-project").addEventListener("click", async () => {
+    if (!confirm(`确认删除项目「${p.name}」及其全部文件？`)) return;
+    try {
+      await deleteProjectCascade(p.id);
+    } catch (err) {
+      alert("删除出错：" + err.message);
+    } finally {
+      // 无论成功与否都复位界面并刷新索引
+      state.currentId = null;
+      $("#project-detail").innerHTML = `
+        <div class="empty-state"><div class="empty-glyph">❏</div>
+        <h2>未选择项目</h2><p>从左侧选择一个项目，或拖入文件开始归档。</p></div>`;
+      $("#chat-target").textContent = "未选择项目";
+      $("#chat-input").disabled = true;
+      $("#chat-send").disabled = true;
+      await refreshData();
+    }
+  });
+
+  $("#project-detail").querySelectorAll(".file-del").forEach((btn) =>
+    btn.addEventListener("click", async () => {
+      try {
+        await deleteFileCascade(Number(btn.dataset.fid));
+      } catch (err) {
+        alert("删除出错：" + err.message);
+      } finally {
+        await refreshData();
+        if (state.currentId) await selectProject(state.currentId);
+      }
+    }));
+}
+
+async function deleteProjectCascade(pid) {
+  const project = state.projects.find((x) => x.id === pid);
+  for (const f of state.files.filter((x) => x.projectId === pid)) {
+    for (const c of (await Store.all("chunks")).filter((x) => x.fileId === f.id)) {
+      await Store.remove("chunks", c.id);
+    }
+    await Store.remove("files", f.id);
+  }
+  for (const m of (await Store.all("messages")).filter((x) => x.projectId === pid)) {
+    await Store.remove("messages", m.id);
+  }
+  await Store.remove("projects", pid);
+  // 同步删除文件夹中该项目的整个目录（限时，避免权限弹窗卡住界面刷新）
+  if (project && FolderStore.handle) {
+    await Promise.race([
+      FolderStore.removeProjectDir(project.folderDir || FolderStore._sanitize(project.name)),
+      new Promise((r) => setTimeout(r, 3000)),
+    ]);
+  }
+}
+
+async function deleteFileCascade(fid) {
+  const rec = (await Store.all("files")).find((x) => x.id === fid);
+  for (const c of (await Store.all("chunks")).filter((x) => x.fileId === fid)) {
+    await Store.remove("chunks", c.id);
+  }
+  await Store.remove("files", fid);
+  // 同步删除文件夹中的原件
+  if (rec && rec.folderRel) {
+    await FolderStore.removeFile(rec.folderRel);
+  }
+}
+
+/* ================= 上传归档 ================= */
+/* 本地预校验：不消耗 AI 调用、不弹文件夹选择器 */
+function validateFile(f) {
+  if (f.size === 0) return "文件为空";
+  if (f.size > MAX_FILE_SIZE) return "文件超过 20MB 限制";
+  const ext = (f.name.includes(".") ? f.name.split(".").pop() : "").toLowerCase();
+  const lower = f.name.toLowerCase();
+  const ok =
+    TEXT_EXTS.has(ext) || ext === "pdf" || ext === "docx" || ext === "" ||
+    ["dockerfile", "makefile", "license"].includes(lower);
+  if (!ok) return `暂不支持的文件类型：.${ext || "?"}`;
+  return null;
+}
+
+/* 上传入口：已选中项目 → 直接归入；否则弹目标选择 */
+let _pendingFiles = null;
+
+function startUpload(fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+  // 先本地预校验：不合法的直接出错误卡片，不弹任何对话框
+  const okFiles = [];
+  for (const f of files) {
+    const err = validateFile(f);
+    if (err) {
+      const tray = getTray();
+      const card = document.createElement("div");
+      card.className = "archive-card err";
+      card.innerHTML = `
+        <div class="ac-name">${esc(f.name)}</div>
+        <div class="ac-status">${esc(err)}</div>`;
+      tray.appendChild(card);
+      tray.scrollTop = tray.scrollHeight;
+    } else {
+      okFiles.push(f);
+    }
+  }
+  if (!okFiles.length) return;
+  if (state.currentId) {
+    uploadTo(okFiles, { projectId: state.currentId });
+  } else if (state.projects.length === 0) {
+    openNewProject(okFiles); // 还没有任何项目：先建项目
+  } else {
+    openTargetModal(okFiles);
+  }
+}
+
+function getTray() {
+  const tray = $("#upload-tray");
+  tray.hidden = false;
+  // 每次新批次清掉上一批已成功的卡片（错误卡片保留到手动关闭）
+  tray.querySelectorAll(".archive-card:not(.err)").forEach((c) => c.remove());
+  let title = tray.querySelector(".tray-title");
+  if (!title) {
+    title = document.createElement("div");
+    title.className = "tray-title";
+    title.innerHTML = `<span>归档结果 / RESULTS</span><button class="tray-close" title="关闭">✕</button>`;
+    title.querySelector(".tray-close").addEventListener("click", () => {
+      tray.hidden = true;
+      tray.querySelectorAll(".archive-card").forEach((c) => c.remove());
+    });
+    tray.prepend(title);
+  }
+  return tray;
+}
+
+/* 成功卡片 8 秒后自动消失（信息在卷宗页都有）；有错误则保留 */
+function autoDismissTray(cards) {
+  const tray = $("#upload-tray");
+  const okCards = cards.filter((c) => !c.classList.contains("err"));
+  if (!okCards.length) return;
+  setTimeout(() => {
+    okCards.forEach((c) => c.remove());
+    if (!tray.querySelector(".archive-card")) tray.hidden = true;
+  }, 8000);
+}
+
+let _editingId = null; // 非空 = 编辑模式
+
+function _resetProjModal(mode) {
+  $("#newproj-mask").querySelector("h3").textContent =
+    mode === "edit" ? "编辑项目" : "新建项目";
+  $("#np-create").textContent = mode === "edit" ? "保存" : "创建";
+}
+
+function openNewProject(pendingFiles = null) {
+  _pendingFiles = pendingFiles;
+  _editingId = null;
+  _resetProjModal("create");
+  $("#np-name").value = "";
+  $("#np-summary").value = "";
+  $("#newproj-mask").classList.add("show");
+  $("#np-name").focus();
+}
+
+function openEditProject(p) {
+  _editingId = p.id;
+  _pendingFiles = null;
+  _resetProjModal("edit");
+  $("#np-name").value = p.name || "";
+  $("#np-summary").value = p.summary || "";
+  $("#newproj-mask").classList.add("show");
+  $("#np-name").focus();
+  $("#np-name").select();
+}
+
+async function createProjectFromModal() {
+  const name = $("#np-name").value.trim();
+  if (!name) { $("#np-name").focus(); return; }
+  const summary = $("#np-summary").value.trim();
+
+  // 编辑模式：改名 / 改简介
+  if (_editingId != null) {
+    const id = _editingId;
+    const dup = state.projects.find((x) => x.name === name && x.id !== id);
+    if (dup) { alert("已有同名项目：" + name); return; }
+    const proj = state.projects.find((x) => x.id === id);
+    if (!proj) { alert("项目不存在"); return; }
+    proj.name = name;
+    proj.summary = summary;
+    try {
+      await Store.put("projects", proj);
+    } catch (e) {
+      alert("保存失败：" + e.message);
+      return;
+    }
+    _editingId = null;
+    _resetProjModal("create");
+    $("#newproj-mask").classList.remove("show");
+    await refreshData();
+    await selectProject(id);
+    return;
+  }
+
+  try {
+    const id = await Store.add("projects", {
+      name, summary, tags: [],
+      createdAt: Date.now(), intro: "", introFiles: 0, introAt: 0,
+    });
+    $("#newproj-mask").classList.remove("show");
+    await refreshData();
+    await selectProject(id);
+    if (_pendingFiles) {
+      const files = _pendingFiles;
+      _pendingFiles = null;
+      uploadTo(files, { projectId: id, created: true });
+    }
+  } catch (err) {
+    alert("创建失败：" + err.message);
+  }
+}
+
+function openTargetModal(files) {
+  _pendingFiles = files;
+  const list = $("#target-list");
+  list.innerHTML = state.projects.map((pr, i) => `
+    <label class="target-opt">
+      <input type="radio" name="target-mode" value="project" data-id="${pr.id}" ${i === 0 ? "checked" : ""}>
+      <span>${esc(pr.name)}</span>
+    </label>`).join("");
+  $("#target-newname").value = "";
+  $("#target-ai").checked = false;
+  $("#target-mask").classList.add("show");
+}
+
+function resolveTargetModal() {
+  const newname = $("#target-newname").value.trim();
+  const ai = $("#target-ai").checked;
+  const checked = document.querySelector("#target-list input:checked");
+  $("#target-mask").classList.remove("show");
+  const files = _pendingFiles;
+  _pendingFiles = null;
+  if (!files) return;
+  if (ai) uploadTo(files, { ai: true });
+  else if (newname) uploadTo(files, { newName: newname });
+  else if (checked) uploadTo(files, { projectId: Number(checked.dataset.id) });
+}
+
+async function uploadTo(files, target) {
+  // 按名称新建项目
+  if (target.newName) {
+    const id = await Store.add("projects", {
+      name: target.newName, summary: "", tags: [],
+      createdAt: Date.now(), intro: "", introFiles: 0, introAt: 0,
+    });
+    await refreshData();
+    target = { projectId: id, created: true };
+  }
+
+  const tray = getTray();
+
+  const scanning = target.ai ? "AI 正在识别所属项目" : "正在解析并归档…";
+  const valid = [];
+  for (const f of files) {
+    const card = document.createElement("div");
+    card.className = "archive-card";
+    tray.appendChild(card);
+    const err = validateFile(f);
+    if (err) {
+      card.classList.add("err");
+      card.innerHTML = `
+        <div class="ac-name">${esc(f.name)}</div>
+        <div class="ac-status">${esc(err)}</div>`;
+    } else {
+      card.innerHTML = `
+        <div class="ac-name">${esc(f.name)}</div>
+        <div class="ac-status"><span class="scanning">${scanning}</span></div>`;
+      valid.push({ f, card });
+    }
+  }
+  tray.scrollTop = tray.scrollHeight;
+  if (!valid.length) return;
+
+  // 连接门：未问过→弹一次；已拒绝→静默；已连接→手势内提前续权限
+  await FolderStore.ensureConnected();
+  updateFolderUI();
+
+  let firstAffected = null;
+  for (const { f, card } of valid) {
+    try {
+      const text = await extractText(f);
+      if (!text.trim()) throw new Error("未能从文件中提取到文本");
+
+      let result;
+      if (target.ai) {
+        result = await archiveOne(f, text);            // AI 自动识别归属
+      } else {
+        const project = state.projects.find((x) => x.id === target.projectId);
+        if (!project) throw new Error("目标项目不存在，请重新选择");
+        result = await archiveInto(project, f, text, !!target.created);
+      }
+      if (firstAffected === null) firstAffected = result.projectId;
+
+      // 原件写入归档文件夹
+      let storedAt = "";
+      if (FolderStore.handle) {
+        // 目录名固定在首次归档时确定（此后改项目名不换目录，删除才找得到）
+        const prec = state.projects.find((x) => x.id === result.projectId);
+        const dirName = (prec && prec.folderDir) || FolderStore._sanitize(result.projectName);
+        if (prec && !prec.folderDir) {
+          prec.folderDir = dirName;
+          await Store.put("projects", prec);
+        }
+        const saved = await FolderStore.save(dirName, f);
+        if (saved) {
+          storedAt = `原件已存入 <b>${esc(saved.display)}</b>`;
+          const rec = (await Store.all("files")).find((x) => x.id === result.fileId);
+          if (rec) { rec.folderRel = saved.rel; await Store.put("files", rec); }
+        } else {
+          storedAt = "⚠ 写入文件夹失败（可在 设置→归档文件夹 重新授权），解析文本已存浏览器";
+        }
+      } else if (FolderStore.declined) {
+        storedAt = "已跳过文件夹 · 仅存解析文本，原件未保留（设置→归档文件夹 可随时连接，之后自动写入）";
+      } else if (FolderStore.supported) {
+        storedAt = "仅存解析文本，原件未保留（可在 设置选择归档文件夹）";
+      } else {
+        storedAt = "仅存解析文本，原件未保留（当前浏览器不支持文件夹归档）";
+      }
+
+      card.classList.remove("err");
+      card.innerHTML = `
+        <div class="ac-name">${esc(f.name)}${result.created ? `<span class="seal-new">新建</span>` : ""}</div>
+        <div class="ac-status">归入项目 <b>${esc(result.projectName)}</b> · ${result.chunks} 个片段</div>
+        <div class="ac-reason">${esc(result.reason || "")}</div>
+        <div class="ac-stored mono">${storedAt}</div>`;
+    } catch (err) {
+      card.classList.add("err");
+      card.innerHTML = `
+        <div class="ac-name">${esc(f.name)}</div>
+        <div class="ac-status">${esc(err.message || "处理失败")}</div>`;
+    }
+  }
+
+  await refreshData();
+  if (firstAffected !== null) await selectProject(firstAffected);
+  dataChanged();
+  autoDismissTray([...tray.querySelectorAll(".archive-card")]);
+}
+
+/* 直接归入指定项目（不经 AI 识别） */
+async function archiveInto(project, file, text, created = false) {
+  const ext = (file.name.includes(".") ? file.name.split(".").pop() : "").toLowerCase();
+  const chunks = chunkText(text);
+  const fileId = await Store.add("files", {
+    projectId: project.id, filename: file.name, size: file.size,
+    kind: ext || "txt", uploadedAt: Date.now(), chunkCount: chunks.length,
+  });
+  await Store.bulkAdd(
+    "chunks",
+    chunks.map((c, i) => ({ fileId, projectId: project.id, seq: i, content: c }))
+  );
+  return {
+    projectId: project.id, projectName: project.name, created, fileId,
+    chunks: chunks.length, reason: "手动归档到指定项目",
+  };
+}
+
+/* ================== 索引落盘：数据写入归档文件夹 ================== */
+const INDEX_FILE = "档库索引.json";
+let _indexTimer = null;
+
+function dataChanged() {
+  try { localStorage.setItem("archive_updatedAt", String(Date.now())); } catch {}
+  scheduleIndexSave();
+}
+
+function scheduleIndexSave() {
+  if (!FolderStore.handle) return;
+  clearTimeout(_indexTimer);
+  _indexTimer = setTimeout(saveIndex, 800);
+}
+
+async function saveIndex() {
+  if (!FolderStore.handle) return;
+  // 定时器上下文没有用户手势，requestPermission 必定抛错——只查询，绝不请求
+  if (!(await FolderStore._queryOnly())) return;
+  try {
+    const dump = { app: "archive-lite", version: 1, updatedAt: Date.now() };
+    for (const c of Store.COLLS) dump[c] = await Store.all(c);
+    const fh = await FolderStore.handle.getFileHandle(INDEX_FILE, { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify(dump));
+    await w.close();
+  } catch (e) {
+    console.warn("[index] 保存失败", e);
+    showBanner("索引写入文件夹失败：" + e.message, { key: "idx" });
+  }
+}
+
+/* 从归档文件夹加载索引（文件夹有且本地不是更新时才覆盖本地） */
+async function loadIndexFromFolder() {
+  if (!FolderStore.handle) return false;
+  try {
+    const fh = await FolderStore.handle.getFileHandle(INDEX_FILE);
+    const dump = JSON.parse(await (await fh.getFile()).text());
+    if (dump.app !== "archive-lite") return false;
+    const localAt = Number(localStorage.getItem("archive_updatedAt") || 0);
+    if ((dump.updatedAt || 0) < localAt - 1000) return false; // 本地更新，保留本地
+    await Store.clearAll();
+    for (const c of Store.COLLS) {
+      for (const r of dump[c] || []) {
+        const { id, ...rest } = r;
+        await Store.add(c, rest);
+      }
+    }
+    try { localStorage.setItem("archive_updatedAt", String(dump.updatedAt || Date.now())); } catch {}
+    return true;
+  } catch {
+    return false; // 文件夹里还没有索引
+  }
+}
+
+async function archiveOne(file, text) {
+  const projects = state.projects;
+  const decision = await AI.classify(file.name, text.slice(0, PREVIEW_LIMIT), projects);
+
+  let projectId = null;
+  if (decision.match_project_id != null) {
+    const hit = projects.find((p) => p.id === decision.match_project_id);
+    if (hit) projectId = hit.id;
+  }
+  let created = false;
+  let projectName = "";
+  if (projectId === null) {
+    const newName = (decision.new_project_name || "").trim() || file.name;
+    const existing = projects.find((p) => p.name === newName);
+    if (existing) {
+      projectId = existing.id;
+      projectName = existing.name;
+    } else {
+      projectId = await Store.add("projects", {
+        name: newName,
+        summary: decision.summary || "",
+        tags: Array.isArray(decision.tags) ? decision.tags : [],
+        createdAt: Date.now(),
+      });
+      created = true;
+      projectName = newName;
+    }
+  } else {
+    projectName = projects.find((p) => p.id === projectId)?.name || "";
+  }
+
+  const ext = (file.name.includes(".") ? file.name.split(".").pop() : "").toLowerCase();
+  const chunks = chunkText(text);
+  const fileId = await Store.add("files", {
+    projectId,
+    filename: file.name,
+    size: file.size,
+    kind: ext || "txt",
+    uploadedAt: Date.now(),
+    chunkCount: chunks.length,
+  });
+  await Store.bulkAdd("chunks", chunks.map((c, i) => ({ fileId, projectId, seq: i, content: c })));
+
+  // 更新项目摘要（新建时已写入；已有项目仅在空摘要时补充）
+  if (!created) {
+    const p = state.projects.find((x) => x.id === projectId);
+    if (p && !p.summary && decision.summary) {
+      p.summary = decision.summary;
+      await Store.put("projects", p);
+    }
+  }
+
+  return { projectId, projectName, created, fileId, chunks: chunks.length, reason: decision.reason || "" };
+}
+
+/* ================= 聊天 ================= */
+function addMsg(role, text = "") {
+  const log = $("#chat-log");
+  const empty = log.querySelector(".chat-empty");
+  if (empty) empty.remove();
+  const el = document.createElement("div");
+  el.className = `msg ${role}`;
+  el.innerHTML = `
+    <div class="m-role">${role === "user" ? "你 / YOU" : "AI 档案员 / ARCHIVIST"}</div>
+    <div class="m-body"></div>`;
+  const body = el.querySelector(".m-body");
+  if (role === "assistant") body.innerHTML = md(text);
+  else body.textContent = text;
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  return el;
+}
+
+function renderChatHistory(messages, project) {
+  const log = $("#chat-log");
+  log.innerHTML = `
+    <div class="chat-empty">
+      <p class="chat-empty-title">AI 档案员</p>
+      <p>关于「${esc(project.name)}」，尽管问。<br>回答基于检索到的项目文件，并标注来源。</p>
+    </div>`;
+  messages.forEach((m) => addMsg(m.role, m.content));
+}
+
+async function sendQuestion(question) {
+  if (!state.currentId) return;
+  const pid = state.currentId;
+  if (state.busyIds.has(pid)) return;
+  state.busyIds.add(pid);
+  $("#chat-send").disabled = true;
+
+  const project = state.projects.find((p) => p.id === pid);
+  if (!project) { state.busyIds.delete(pid); return; }
+  addMsg("user", question);
+  const assistantEl = addMsg("assistant", "");
+  const body = assistantEl.querySelector(".m-body");
+  body.classList.add("cursor-blink");
+  const log = $("#chat-log");
+  // 视图还挂在页面上且仍是该项目时才更新 DOM；切走后生成在后台继续
+  const live = () => document.body.contains(body) && state.currentId === pid;
+
+  await Store.add("messages", { projectId: pid, role: "user", content: question, createdAt: Date.now() });
+  dataChanged();
+
+  let answer = "";
+  let sources = [];
+  try {
+    const allChunks = (await Store.all("chunks")).filter((c) => c.projectId === pid);
+    const fileMap = new Map(state.files.map((f) => [f.id, f.filename]));
+    const chunks = allChunks.map((c) => ({ ...c, filename: fileMap.get(c.fileId) || "未知文件" }));
+    const contexts = bm25Search(chunks, question, TOP_K);
+
+    const history = (await Store.all("messages"))
+      .filter((m) => m.projectId === pid && m.id)
+      .sort((a, b) => a.id - b.id)
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    for await (const piece of AI.chatStream(question, project, contexts, history)) {
+      answer += piece;
+      if (live()) {
+        body.innerHTML = md(answer);
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+    sources = [...new Set(contexts.map((c) => c.filename))];
+
+    if (answer) {
+      // 来源写入历史：切换项目重建视图后引用不丢失
+      const stored = answer + (sources.length ? "\n\n来源：" + sources.join("、") : "");
+      await Store.add("messages", { projectId: pid, role: "assistant", content: stored, createdAt: Date.now() });
+      dataChanged();
+    }
+    if (live()) {
+      body.classList.remove("cursor-blink");
+      if (!answer) body.textContent = "（未收到回答）";
+      if (answer && sources.length) {
+        const src = document.createElement("div");
+        src.className = "m-sources";
+        src.innerHTML = sources.map((s) => `<span class="src-chip">📄 ${esc(s)}</span>`).join("");
+        assistantEl.appendChild(src);
+      }
+    } else if (state.currentId === pid) {
+      // 用户切走又切回：原视图已销毁，重建聊天区接上完成的回答
+      await selectProject(pid);
+    }
+  } catch (err) {
+    if (document.body.contains(body)) {
+      body.classList.remove("cursor-blink");
+      if (answer) {
+        const note = document.createElement("div");
+        note.className = "msg-error";
+        note.style.marginTop = "6px";
+        note.textContent = `⚠ 回答中断：${err.message}（已保留部分内容）`;
+        assistantEl.appendChild(note);
+      } else {
+        assistantEl.classList.add("msg-error");
+        body.textContent = `出错了：${err.message}`;
+      }
+    }
+    if (answer) {
+      // 中断也保留部分内容到历史
+      try {
+        await Store.add("messages", {
+          projectId: pid, role: "assistant",
+          content: answer + `\n\n⚠（回答中断：${err.message}）`,
+          createdAt: Date.now(),
+        });
+        dataChanged();
+      } catch { /* 忽略 */ }
+    }
+  } finally {
+    state.busyIds.delete(pid);
+    if (state.currentId === pid) $("#chat-send").disabled = false;
+    if (document.body.contains(log)) log.scrollTop = log.scrollHeight;
+  }
+}
+
+/* ================= 导出 / 导入 ================= */
+async function exportData() {
+  const dump = { app: "archive-lite", version: 1, exportedAt: new Date().toISOString() };
+  for (const c of Store.COLLS) dump[c] = await Store.all(c);
+  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `archive-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function importData(file) {
+  let dump;
+  try {
+    dump = JSON.parse(await file.text());
+  } catch {
+    throw new Error("文件不是有效的 JSON 备份");
+  }
+  if (dump.app !== "archive-lite") throw new Error("不是档库导出的备份文件");
+  if (!confirm("导入将覆盖现有全部数据，确定继续？")) return;
+  try {
+    await Store.clearAll();
+    for (const c of Store.COLLS) {
+      const rows = (dump[c] || []).map(({ id, ...rest }) => rest); // 重新分配 id
+      for (const r of rows) await Store.add(c, r);
+    }
+  } catch (e) {
+    // 中断后数据不完整：明确告知，避免"看起来导入成功"
+    throw new Error(`导入中断（数据可能不完整，可重试）：${e.message}`);
+  }
+  state.currentId = null;
+  await refreshData();
+  await saveIndex();
+  location.reload();
+}
+
+/* ================= 设置弹层 ================= */
+function updateFolderUI() {
+  const el = document.getElementById("cfg-folder");
+  const btn = document.getElementById("cfg-folder-btn");
+  if (!el) return;
+  if (!FolderStore.supported) {
+    el.textContent = "当前浏览器不支持（请用 Chrome / Edge）";
+    if (btn) btn.disabled = true;
+  } else if (FolderStore.handle && FolderStore.perm === "prompt") {
+    el.textContent = "已连接（浏览器权限待续期）";
+    if (btn) { btn.disabled = false; btn.textContent = "重新授权"; }
+  } else if (FolderStore.handle) {
+    el.textContent = FolderStore.folderName;
+    if (btn) { btn.disabled = false; btn.textContent = "更改"; }
+  } else if (FolderStore.declined) {
+    el.textContent = "未连接（已记住取消，不再自动询问）";
+    if (btn) { btn.disabled = false; btn.textContent = "选择文件夹"; }
+  } else {
+    el.textContent = "未连接（原件暂存浏览器）";
+    if (btn) { btn.disabled = false; btn.textContent = "选择文件夹"; }
+  }
+}
+
+function openSettings() {
+  const cfg = getConfig();
+  $("#cfg-base").value = cfg.baseUrl;
+  $("#cfg-key").value = cfg.apiKey;
+  $("#cfg-model").value = cfg.model;
+  updateFolderUI();
+  $("#settings-mask").classList.add("show");
+}
+function closeSettings() { $("#settings-mask").classList.remove("show"); }
+
+/* ================= 事件绑定 ================= */
+$("#btn-upload-top").addEventListener("click", () => $("#file-input").click());
+$("#dropzone").addEventListener("click", () => $("#file-input").click());
+$("#file-input").addEventListener("change", (e) => { startUpload(e.target.files); e.target.value = ""; });
+
+["dragover", "dragenter"].forEach((ev) =>
+  document.addEventListener(ev, (e) => { e.preventDefault(); $("#dropzone").classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) =>
+  document.addEventListener(ev, (e) => {
+    e.preventDefault();
+    if (ev === "dragleave" && e.target === document.documentElement) $("#dropzone").classList.remove("over");
+  }));
+document.addEventListener("drop", (e) => {
+  e.preventDefault();
+  $("#dropzone").classList.remove("over");
+  if (e.dataTransfer?.files?.length) startUpload(e.dataTransfer.files);
+});
+
+$("#chat-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = $("#chat-input");
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = "";
+  sendQuestion(q);
+});
+$("#chat-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#chat-form").requestSubmit(); }
+});
+
+$("#btn-export").addEventListener("click", () => exportData().catch((e) => alert("导出失败：" + e.message)));
+$("#btn-import").addEventListener("click", () => $("#import-input").click());
+$("#import-input").addEventListener("change", (e) => {
+  const f = e.target.files[0];
+  if (f) importData(f).catch((err) => alert("导入失败：" + err.message));
+  e.target.value = "";
+});
+
+$("#btn-settings").addEventListener("click", openSettings);
+$("#cfg-cancel").addEventListener("click", closeSettings);
+$("#settings-mask").addEventListener("click", (e) => { if (e.target === $("#settings-mask")) closeSettings(); });
+$("#cfg-folder-btn").addEventListener("click", async () => {
+  try {
+    if (FolderStore.handle && FolderStore.perm === "prompt") {
+      await FolderStore._ensurePermission(); // 本次点击手势内续权限
+    } else {
+      await FolderStore.pick();              // 选择/更改（用户主动，取消只静默）
+    }
+  } catch { /* 用户取消，静默 */ }
+  await FolderStore._ensurePermission();     // 归一 perm
+  updateFolderUI();
+  await scheduleIndexSave();                 // 新连接后立即能写档库索引.json
+  if (state.currentId) await selectProject(state.currentId);
+});
+
+$("#cfg-test").addEventListener("click", async () => {
+  const el = $("#cfg-status");
+  el.textContent = "测试中…";
+  try {
+    AI._model = null;
+    const m = await AI.detectModel();
+    el.textContent = `✓ 可用（${m}）`;
+  } catch (err) {
+    el.textContent = `✗ ${err.message}`;
+  }
+});
+
+$("#cfg-save").addEventListener("click", () => {
+  setConfig({
+    baseUrl: $("#cfg-base").value.trim(),
+    apiKey: $("#cfg-key").value.trim(),
+    model: $("#cfg-model").value.trim(),
+  });
+  AI._model = null;
+  closeSettings();
+});
+
+/* 新建项目 / 上传目标弹层 */
+$("#btn-new-project").addEventListener("click", () => openNewProject(null));
+$("#np-cancel").addEventListener("click", () => {
+  _pendingFiles = null;
+  _editingId = null;
+  _resetProjModal("create");
+  $("#newproj-mask").classList.remove("show");
+});
+$("#np-create").addEventListener("click", createProjectFromModal);
+$("#np-name").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") createProjectFromModal();
+});
+$("#target-cancel").addEventListener("click", () => {
+  _pendingFiles = null;
+  $("#target-mask").classList.remove("show");
+});
+$("#target-ok").addEventListener("click", resolveTargetModal);
+$("#newproj-mask").addEventListener("click", (e) => {
+  if (e.target === $("#newproj-mask")) {
+    _pendingFiles = null; _editingId = null; _resetProjModal("create");
+    $("#newproj-mask").classList.remove("show");
+  }
+});
+$("#target-mask").addEventListener("click", (e) => {
+  if (e.target === $("#target-mask")) { _pendingFiles = null; $("#target-mask").classList.remove("show"); }
+});
+
+/* ================= 启动 ================= */
+(async function boot() {
+  try {
+    await Store.init();
+    await FolderStore.restore();
+    updateFolderUI();
+    await loadIndexFromFolder();   // 文件夹里有索引则加载（以最新为准）
+    await refreshData();
+    window.__bootDone = true;
+    if (FolderStore.perm === "granted") scheduleIndexSave();
+    if (Store._fallback) {
+      showBanner(
+        "当前浏览器环境无法使用 IndexedDB，已降级为 localStorage 兼容模式：容量有限，建议尽早「导出」备份。",
+        { sticky: true, key: "fallback" }
+      );
+    }
+    AI.detectModel()
+      .then((m) => console.log("[ai] 就绪:", m))
+      .catch((e) =>
+        showBanner(`AI 连接失败：${e.message}。上传/问答暂不可用，可点「设置 → 测试连接」排查。`, {
+          sticky: true, key: "ai",
+        })
+      );
+  } catch (err) {
+    $("#project-list").innerHTML = `<p class="empty-note">初始化失败：${esc(err.message)}</p>`;
+    showBanner("初始化失败：" + err.message, { sticky: true });
+  }
+})();
+</script>
+</body>
+</html>
